@@ -3,150 +3,88 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cylon Matrix V8.2 - Studio Mixer & Recorder</title>
+    <title>Cylon Matrix V10 - Cross-Platform Autopilot</title>
     
     <script src="https://unpkg.com/compromise"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mespeak/1.9.7/mespeak.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
     
     <style>
-        body { margin: 0; padding: 20px; box-sizing: border-box; color: #d3d3d3; font-family: 'Courier New', Courier, monospace; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; overflow-x: hidden; background-color: #030303; }
+        body { margin: 0; padding: 10px; box-sizing: border-box; color: #d3d3d3; font-family: 'Courier New', Courier, monospace; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; min-height: 100vh; overflow-x: hidden; background-color: #030303; }
         #bg-canvas { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -1; }
-        .container { background: rgba(17, 17, 17, 0.85); backdrop-filter: blur(6px); padding: 30px; border-radius: 10px; border: 2px solid #333; box-shadow: 0 0 40px rgba(255, 0, 0, 0.2); max-width: 1000px; width: 100%; text-align: center; position: relative; z-index: 10;}
+        .container { background: rgba(17, 17, 17, 0.85); backdrop-filter: blur(6px); padding: 20px; border-radius: 10px; border: 2px solid #333; box-shadow: 0 0 40px rgba(255, 0, 0, 0.2); max-width: 1000px; width: 100%; text-align: center; position: relative; z-index: 10; margin-top: 20px;}
         h1 { color: #00d2ff; letter-spacing: 2px; text-transform: uppercase; font-size: 1.5em; margin-bottom: 5px; text-shadow: 0 0 10px rgba(0, 210, 255, 0.4);}
         .subtitle { color: #888; font-size: 0.8em; margin-bottom: 20px; }
         
-        button { font-family: inherit; cursor: pointer; transition: 0.2s; border-radius: 5px; font-weight: bold; border: 1px solid transparent;}
-        #power-btn { background: #00d2ff; color: #000; padding: 15px 30px; font-size: 1.2em; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); box-shadow: 0 0 20px #00d2ff; z-index: 20;}
+        button { font-family: inherit; cursor: pointer; transition: 0.2s; border-radius: 5px; font-weight: bold; border: 1px solid transparent; padding: 12px;}
+        #power-btn { background: #00d2ff; color: #000; padding: 20px 40px; font-size: 1.2em; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); box-shadow: 0 0 20px #00d2ff; z-index: 20;}
         #power-btn:hover { background: #00e5ff; box-shadow: 0 0 30px #00e5ff; }
         
-        .action-btn { background: #222; color: #00d2ff; border-color: #00d2ff; padding: 8px 15px; margin: 5px; font-size: 0.9em;}
+        .action-btn { background: #222; color: #00d2ff; border-color: #00d2ff; margin: 5px; font-size: 0.9em; width: 100%; box-sizing: border-box;}
+        @media (min-width: 600px) { .action-btn { width: auto; flex: 1; } }
         .action-btn:hover { background: #00d2ff; color: #000; }
         .action-btn.active { background: #ffaa00; color: #000; border-color: #ffaa00; }
         .stop-btn { border-color: #ff3333; color: #ff3333; } .stop-btn:hover { background: #ff3333; color: #000; }
-        .record-btn { border-color: #ff0055; color: #ff0055; } .record-btn.recording { background: #ff0055; color: #fff; animation: blink 1s infinite; }
-        @keyframes blink { 50% { opacity: 0.5; } }
         
-        .chat-box { background: rgba(0,0,0,0.7); padding: 20px; border-radius: 5px; border: 1px solid #333; min-height: 50px; margin-bottom: 15px; color: #00d2ff; font-size: 1.1em; line-height: 1.5; font-style: italic;}
+        .chat-box { background: rgba(0,0,0,0.7); padding: 15px; border-radius: 5px; border: 1px solid #333; min-height: 50px; margin-bottom: 15px; color: #00d2ff; font-size: 1em; line-height: 1.5; font-style: italic;}
         
-        select, input[type="text"], input[type="file"] { width: 100%; padding: 10px; background: rgba(0,0,0,0.8); color: #00d2ff; border: 1px solid #555; font-family: inherit; margin-bottom: 10px; box-sizing: border-box; border-radius: 5px;}
+        input[type="text"] { width: 100%; padding: 12px; background: rgba(0,0,0,0.8); color: #00d2ff; border: 1px solid #555; font-family: inherit; margin-bottom: 10px; box-sizing: border-box; border-radius: 5px;}
         
         .module-controls { background: rgba(26,26,26,0.7); padding: 15px; border-radius: 5px; margin-bottom: 15px; border: 1px solid #2d2d3a; text-align: left;}
         
-        .flex-row { display: flex; gap: 15px; flex-wrap: wrap; align-items: center; justify-content: space-between;}
+        .flex-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; justify-content: space-between;}
         .flex-col { display: flex; flex-direction: column; gap: 5px; flex: 1; min-width: 120px;}
         .slider-group label { display: flex; justify-content: space-between; font-size: 0.8em; color: #aaa; margin-bottom: 5px; }
         input[type="range"] { width: 100%; cursor: pointer; accent-color: #00d2ff; }
-        .warning-text { color: #ffaa00; font-size: 0.75em; margin-top: 2px; }
         
-        .mixer-panel { background: #111; padding: 15px; border-radius: 8px; border: 1px solid #444; display: flex; gap: 20px; margin-bottom: 15px; overflow-x: auto;}
-        .mixer-channel { display: flex; flex-direction: column; align-items: center; background: #1a1a24; padding: 10px; border-radius: 5px; flex: 1;}
-        .mixer-channel input[type="range"].fader { writing-mode: vertical-lr; direction: rtl; width: 30px; height: 120px; accent-color: #ffaa00; margin: 10px 0;}
+        #lyrics-display { white-space: pre-line; background: rgba(10,10,10,0.8); border-left: 4px solid #00ff00; padding: 15px; color: #fff; font-size: 0.85em; margin-top: 15px; max-height: 250px; overflow-y: auto; font-family: inherit;}
         
-        video { width: 100%; max-height: 100px; background: #000; border: 1px solid #333; margin-top: 10px; display: none; }
+        .toggle-switch { display: flex; align-items: center; gap: 10px; cursor: pointer; background: #111; padding: 10px; border-radius: 5px; border: 1px solid #444; color: #00ff00; font-weight: bold;}
+        input[type="checkbox"] { accent-color: #00ff00; width: 20px; height: 20px;}
 
-        /* PROJECTOR OVERLAY */
-        #projector-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #000; z-index: 9999; display: none; flex-direction: column; align-items: center; justify-content: center; }
-        #proj-canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 10000; }
-        #proj-text { position: absolute; bottom: 10%; width: 80%; text-align: center; color: #ff3333; font-family: 'Courier New', Courier, monospace; font-size: 3.5vw; font-weight: bold; text-shadow: 0 0 20px #ff0000; z-index: 10001; pointer-events: none; text-transform: uppercase; }
-        #close-proj-btn { position: absolute; top: 20px; right: 20px; z-index: 10002; background: transparent; border: 2px solid #ff3333; color: #ff3333; padding: 10px 20px; cursor: pointer; }
     </style>
 </head>
 <body>
 
-    <div id="projector-overlay">
-        <canvas id="proj-canvas"></canvas>
-        <div id="proj-text">AWAITING TRANSMISSION...</div>
-        <button id="close-proj-btn" onclick="toggleProjector()">EXIT PROJECTOR</button>
-    </div>
-
     <canvas id="bg-canvas"></canvas>
     
     <div class="container" id="app-container">
-        <button id="power-btn" onclick="powerOn()">INITIALIZE STUDIO MATRIX</button>
+        <button id="power-btn" onclick="powerOn()">INITIALIZE MATRIX</button>
         
-        <h1>Cylon Matrix V8.2</h1>
-        <div class="subtitle">Stable DSP & CPU Optimization</div>
+        <h1>Cylon Matrix V10</h1>
+        <div class="subtitle">Cross-Platform (TV & Mobile) Autopilot</div>
         
-        <div class="chat-box" id="response-box" style="text-align: center;">"..."</div>
+        <div class="chat-box" id="response-box" style="text-align: center;">"Awaiting initialization sequence."</div>
 
         <div id="main-interface" style="display:none;">
             
             <div class="module-controls" style="border-color: #ffaa00;">
-                <h3 style="margin-top:0; color:#ffaa00;">1. Live Mixer & Inputs</h3>
-                <div class="flex-row" style="margin-bottom: 15px;">
-                    <button class="action-btn" id="btn-mic" onclick="toggleMic()">Toggle Mic</button>
-                    <input type="file" id="mediaFile" accept="audio/*,video/*" style="width: auto; flex: 1; margin: 0;">
+                <h3 style="margin-top:0; color:#ffaa00; font-size: 1.1em;">1. Vocoder Engine</h3>
+                <div class="flex-row" style="margin-top: 10px;">
+                    <button class="action-btn" id="vocoder-btn" onclick="toggleVocoder()">TURN ON VOCODER (PC/Mac Only)</button>
                 </div>
-                <video id="videoElement" controls loop></video>
-
-                <div class="mixer-panel">
-                    <div class="mixer-channel">
-                        <label style="font-size:0.8em; color:#00d2ff;">A.I. TTS</label>
-                        <input type="range" class="fader" id="vol-tts" min="-60" max="6" value="0">
+                <div class="flex-row" style="margin-top: 15px;">
+                    <div class="flex-col slider-group">
+                        <label><span>Vocoder Pitch</span> <span id="pitchDisplay">90 Hz</span></label>
+                        <input type="range" id="pitchSlider" min="30" max="400" value="90">
                     </div>
-                    <div class="mixer-channel">
-                        <label style="font-size:0.8em; color:#ff3333;">Microphone</label>
-                        <input type="range" class="fader" id="vol-mic" min="-60" max="6" value="-60">
-                    </div>
-                    <div class="mixer-channel">
-                        <label style="font-size:0.8em; color:#ffaa00;">Media Player</label>
-                        <input type="range" class="fader" id="vol-media" min="-60" max="6" value="-60">
-                    </div>
-                    <div class="mixer-channel" style="border-left: 2px solid #444;">
-                        <label style="font-size:0.8em; color:#fff;">MASTER</label>
-                        <input type="range" class="fader" id="vol-master" min="-60" max="6" value="0">
-                    </div>
-                </div>
-
-                <div class="flex-row" style="background: #1a1a24; padding: 10px; border-radius: 5px;">
-                    <div class="flex-col">
-                        <label style="font-size: 0.8em; color:#aaa;">Media Speed (<span id="speedDisplay">1.0</span>x)</label>
-                        <input type="range" id="dj-speed" min="0.1" max="3.0" step="0.1" value="1.0">
-                    </div>
-                    <button class="action-btn" id="dj-reverse" onclick="toggleReverse()">Reverse Play</button>
-                    <button class="action-btn" id="dj-loop" onclick="toggleLoop()">Loop ON</button>
                 </div>
             </div>
 
-            <div class="module-controls">
-                <h3 style="margin-top:0; color:#00d2ff;">2. Vocoder & Performance</h3>
-                <div class="flex-row" style="margin-bottom: 15px;">
-                    <button class="action-btn" id="vocoder-btn" onclick="toggleVocoder()" style="flex: 1;">TURN ON VOCODER</button>
-                    <div class="flex-col slider-group">
-                        <label><span>Pitch</span> <span id="pitchDisplay">90 Hz</span></label>
-                        <input type="range" id="pitchSlider" min="30" max="600" value="90">
-                    </div>
+            <div class="module-controls" style="border-color: #00ff00;">
+                <h3 style="margin-top:0; color:#00ff00; font-size: 1.1em;">2. Deep Song Generator</h3>
+                
+                <label class="toggle-switch" style="margin-bottom: 15px;">
+                    <input type="checkbox" id="autopilot-toggle"> 
+                    AUTOPILOT (Continuous Generation)
+                </label>
+
+                <div class="flex-row">
+                    <input type="text" id="song-topic" placeholder="Seed keyword (e.g. quantum, humanity)" style="flex:2; margin:0;">
+                    <button class="action-btn" style="flex:1; margin:0; background: #004400; border-color: #00ff00; color: #00ff00;" onclick="triggerManualGeneration()">► GENERATE & PLAY SONG</button>
                 </div>
                 
-                <div class="flex-row" style="margin-bottom: 15px; background: rgba(0,210,255,0.1); padding: 10px; border-radius: 5px;">
-                    <div class="flex-col slider-group" style="width: 100%;">
-                        <label><span style="color:#fff; font-weight:bold;">DSP Latency (CPU Load)</span> <span id="latencyDisplay">20 ms</span></label>
-                        <input type="range" id="latencySlider" min="20" max="100" step="10" value="20">
-                        <div class="warning-text">Increase this if audio crackles or stutters (Eco = 50-100ms).</div>
-                    </div>
-                </div>
-
-                <div class="flex-row">
-                    <div class="flex-col slider-group"><label>Master Delay</label><input type="range" id="master-delay" min="0" max="1" step="0.01" value="0"></div>
-                    <div class="flex-col slider-group"><label>Master Reverb</label><input type="range" id="master-reverb" min="0" max="1" step="0.01" value="0"></div>
-                </div>
-            </div>
-
-            <div class="module-controls" style="border-color: #ff0055;">
-                <h3 style="margin-top:0; color:#ff0055;">3. Studio Recording & UI</h3>
-                <div class="flex-row">
-                    <button class="action-btn record-btn" id="record-btn" onclick="toggleRecording()" style="flex:2;">START A/V RECORDING</button>
-                    <button class="action-btn" style="flex:1;" onclick="toggleProjector()">Launch Projector</button>
-                </div>
-                <div id="record-status" style="font-size: 0.8em; color: #ffaa00; margin-top: 10px;">Status: Standby.</div>
-            </div>
-
-            <div class="module-controls">
-                <div class="flex-row">
-                    <input type="text" id="song-topic" placeholder="Keyword (e.g. quantum)" style="flex:2; margin:0;">
-                    <button class="action-btn" style="flex:1; margin:0;" onclick="executeVocals()">► GENERATE & PLAY TTS</button>
-                </div>
+                <div id="lyrics-display">Data stream offline.</div>
             </div>
             
             <button class="action-btn stop-btn" style="width: 100%; padding: 15px;" onclick="emergencyStop()">EMERGENCY STOP (ALL)</button>
@@ -155,22 +93,16 @@
 
     <script>
         // ==========================================
-        // 1. UI GRAPHICS & PROJECTOR 
+        // 1. UI GRAPHICS
         // ==========================================
         const bgCtx = document.getElementById('bg-canvas').getContext('2d');
-        const projCanvas = document.getElementById('proj-canvas');
-        const projCtx = projCanvas.getContext('2d');
-        let w, h, pW, pH, scanX = 0, projectorActive = false;
-
-        function resize() { 
-            w = bgCtx.canvas.width = window.innerWidth; h = bgCtx.canvas.height = window.innerHeight; 
-            if(projectorActive) { pW = projCanvas.width = window.innerWidth; pH = projCanvas.height = window.innerHeight; }
-        }
+        let w, h, scanX = 0;
+        function resize() { w = bgCtx.canvas.width = window.innerWidth; h = bgCtx.canvas.height = window.innerHeight; }
         window.addEventListener('resize', resize); resize();
 
         function drawBg() {
             bgCtx.fillStyle = '#050505'; bgCtx.fillRect(0, 0, w, h);
-            scanX = (scanX + 4) % (w + 400);
+            scanX = (scanX + 3) % (w + 400);
             let cx = scanX - 200;
             let ambient = bgCtx.createRadialGradient(cx, h/2, 0, cx, h/2, 600);
             ambient.addColorStop(0, 'rgba(0, 210, 255, 0.15)'); ambient.addColorStop(1, 'rgba(0,0,0,0)');
@@ -179,233 +111,216 @@
         }
         drawBg();
 
-        function toggleProjector() {
-            projectorActive = !projectorActive;
-            document.getElementById('projector-overlay').style.display = projectorActive ? 'flex' : 'none';
-            if (projectorActive) { resize(); drawProjector(); }
-        }
-
-        let tz = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
-        function drawProjector() {
-            if (!projectorActive) return;
-            projCtx.fillStyle = '#050505'; projCtx.fillRect(0, 0, pW, pH);
-            let cx = pW / 2, cy = pH / 2;
-            
-            projCtx.strokeStyle = 'rgba(255, 0, 0, 0.3)'; projCtx.lineWidth = 2;
-            for (let i = 0; i < tz.length; i++) {
-                tz[i] -= 0.1; if (tz[i] < 0.1) tz[i] += 10;
-                let size = (Math.min(pW, pH) * 2) / tz[i], x = cx - size/2, y = cy - size/2;
-                projCtx.strokeRect(x, y, size, size);
-            }
-            requestAnimationFrame(drawProjector);
-        }
-
         // ==========================================
-        // 2. AUDIO MIXER & TONE.JS ROUTING
+        // 2. CROSS-PLATFORM AUDIO INIT
         // ==========================================
         let meSpeakReady = false, isVocoderActive = false;
-        let masterOut, modulatorBus, vocoderBus, carrier;
-        let vocoderMatrix = []; // Store bands here to restart intervals dynamically
-        let vocoderIntervals = []; 
-        
-        let ttsChannel, micChannel, mediaChannel;
-        let micInput, mediaAudioPlayer, videoElement, mediaSourceNode;
+        let masterOut, modulatorBus, vocoderBus, carrier, ttsChannel;
+        let activeTonePlayer = null;
+        let activeNativeAudio = null;
 
-        function powerOn() {
+        async function powerOn() {
+            try {
+                // Initialize Web Audio API safely
+                await Tone.start();
+                ttsChannel = new Tone.Channel(0).toDestination();
+                masterOut = new Tone.Channel(0).toDestination();
+            } catch (e) {
+                console.warn("Tone.js not fully supported on this device. Fallback mode enabled.");
+            }
+            
             document.getElementById('power-btn').style.display = 'none';
             document.getElementById('main-interface').style.display = 'block';
+            
             meSpeak.loadConfig("https://cdnjs.cloudflare.com/ajax/libs/mespeak/1.9.7/mespeak_config.json");
-            meSpeak.loadVoice("https://cdnjs.cloudflare.com/ajax/libs/mespeak/1.9.7/voices/en/en.json", () => meSpeakReady = true);
-        }
-
-        async function initAudio() {
-            if(Tone.context.state !== 'running') await Tone.start();
-            if(masterOut) return;
-
-            ttsChannel = new Tone.Channel(0).toDestination();
-            micChannel = new Tone.Channel(-60).toDestination();
-            mediaChannel = new Tone.Channel(-60).toDestination();
-            masterOut = new Tone.Channel(0).toDestination();
-
-            window.masterDelay = new Tone.FeedbackDelay(0.3, 0.4).connect(masterOut); window.masterDelay.wet.value = 0;
-            window.masterReverb = new Tone.Reverb({ decay: 4, wet: 0 }).connect(masterOut);
+            meSpeak.loadVoice("https://cdnjs.cloudflare.com/ajax/libs/mespeak/1.9.7/voices/en/en.json", () => {
+                meSpeakReady = true;
+                document.getElementById('response-box').innerText = '"Matrix V10 Online. Multi-platform audio engaged."';
+            });
             
-            ttsChannel.connect(window.masterDelay); ttsChannel.connect(window.masterReverb);
-            micChannel.connect(window.masterDelay); micChannel.connect(window.masterReverb);
-            mediaChannel.connect(window.masterDelay); mediaChannel.connect(window.masterReverb);
-
-            document.getElementById('vol-tts').oninput = e => ttsChannel.volume.value = e.target.value;
-            document.getElementById('vol-mic').oninput = e => micChannel.volume.value = e.target.value;
-            document.getElementById('vol-media').oninput = e => mediaChannel.volume.value = e.target.value;
-            document.getElementById('vol-master').oninput = e => masterOut.volume.value = e.target.value;
-            
-            document.getElementById('master-delay').oninput = e => window.masterDelay.wet.value = e.target.value;
-            document.getElementById('master-reverb').oninput = async e => { if(!window.masterReverb.ready) await window.masterReverb.generate(); window.masterReverb.wet.value = e.target.value; };
+            // Prime native SpeechSynthesis for Smart TVs
+            let dummyUtt = new SpeechSynthesisUtterance("");
+            window.speechSynthesis.speak(dummyUtt);
         }
 
-        // --- MEDIA PLAYER ---
-        document.getElementById('mediaFile').onchange = async (e) => {
-            if(!e.target.files[0]) return;
-            await initAudio();
-            const url = URL.createObjectURL(e.target.files[0]);
-            videoElement = document.getElementById('videoElement');
-
-            if(e.target.files[0].type.startsWith('video/')) {
-                videoElement.src = url; videoElement.style.display = 'block';
-                if(!mediaSourceNode) { mediaSourceNode = Tone.context.createMediaElementSource(videoElement); Tone.connect(mediaSourceNode, mediaChannel); }
-                document.getElementById('vol-media').value = 0; mediaChannel.volume.value = 0;
-            } else {
-                videoElement.style.display = 'none';
-                if(mediaAudioPlayer) mediaAudioPlayer.dispose();
-                mediaAudioPlayer = new Tone.Player(url, () => {
-                    mediaAudioPlayer.connect(mediaChannel); mediaAudioPlayer.loop = true; mediaAudioPlayer.start();
-                    document.getElementById('vol-media').value = 0; mediaChannel.volume.value = 0;
-                });
-            }
-        };
-
-        function toggleReverse() { if(mediaAudioPlayer) { mediaAudioPlayer.reverse = !mediaAudioPlayer.reverse; document.getElementById('dj-reverse').classList.toggle('active'); } }
-        function toggleLoop() {
-            if(mediaAudioPlayer) { mediaAudioPlayer.loop = !mediaAudioPlayer.loop; document.getElementById('dj-loop').classList.toggle('active'); } 
-            else if (videoElement) { videoElement.loop = !videoElement.loop; document.getElementById('dj-loop').classList.toggle('active'); }
-        }
-        document.getElementById('dj-speed').oninput = e => {
-            document.getElementById('speedDisplay').innerText = parseFloat(e.target.value).toFixed(1);
-            if(mediaAudioPlayer) mediaAudioPlayer.playbackRate = e.target.value;
-            if(videoElement) videoElement.playbackRate = e.target.value;
-        };
-
-        // --- MICROPHONE ---
-        async function toggleMic() {
-            await initAudio();
-            if(micInput) {
-                micInput.dispose(); micInput = null;
-                document.getElementById('vol-mic').value = -60; micChannel.volume.value = -60;
-                document.getElementById('btn-mic').classList.remove('active');
-            } else {
-                micInput = new Tone.UserMedia(); await micInput.open(); micInput.connect(micChannel);
-                document.getElementById('vol-mic').value = 0; micChannel.volume.value = 0;
-                document.getElementById('btn-mic').classList.add('active');
-            }
-        }
-
-        // --- VOCODER CORE WITH LATENCY CONTROL ---
+        // ==========================================
+        // 3. VOCODER (Safe for PC/Mac)
+        // ==========================================
+        let vocoderIntervals = []; 
         function startVocoderLoops() {
-            // Clear old loops
             vocoderIntervals.forEach(id => clearInterval(id));
             vocoderIntervals = [];
-
-            let speedMs = parseInt(document.getElementById('latencySlider').value);
-            // Dynamic smoothing: if speed is slow (100ms), we need more smoothing to prevent clicking
-            let dynSmoothing = speedMs >= 50 ? 0.4 : 0.2; 
-            let rampTime = speedMs / 1000; // Convert ms to seconds for Tone.js
-
-            vocoderMatrix.forEach(b => {
-                b.meter.smoothing = dynSmoothing;
+            if(!window.vocoderMatrix) return;
+            window.vocoderMatrix.forEach(b => {
                 let invId = setInterval(() => { 
                     let db = b.meter.getValue(); 
-                    b.gain.gain.rampTo(Tone.dbToGain(db) * 20, rampTime); 
-                }, speedMs);
+                    b.gain.gain.rampTo(Tone.dbToGain(db) * 20, 0.05); 
+                }, 50); 
                 vocoderIntervals.push(invId);
             });
         }
 
-        document.getElementById('latencySlider').oninput = e => {
-            document.getElementById('latencyDisplay').innerText = e.target.value + ' ms';
-            if (isVocoderActive) {
-                // Restart intervals live while vocoder is running!
-                startVocoderLoops();
-            }
-        };
-
         async function toggleVocoder() {
-            await initAudio();
+            try {
+                if(Tone.context.state !== 'running') await Tone.start();
+            } catch (e) {
+                alert("Vocoder is not supported on this TV/Mobile browser."); return;
+            }
+            
             const btn = document.getElementById('vocoder-btn');
             
             if(isVocoderActive) {
                 isVocoderActive = false; Tone.Transport.stop();
                 if(carrier) carrier.dispose();
-                
                 vocoderIntervals.forEach(id => clearInterval(id));
                 vocoderIntervals = [];
-                vocoderMatrix.forEach(b => { b.modF.dispose(); b.carF.dispose(); b.meter.dispose(); b.gain.dispose(); });
-                vocoderMatrix = [];
-
-                ttsChannel.disconnect(modulatorBus); micChannel.disconnect(modulatorBus); mediaChannel.disconnect(modulatorBus);
-                ttsChannel.toDestination(); micChannel.toDestination(); mediaChannel.toDestination();
+                
+                ttsChannel.disconnect(modulatorBus);
+                ttsChannel.toDestination();
+                
                 btn.innerText = "TURN ON VOCODER"; btn.style.background = "#222"; btn.style.color = "#00d2ff";
             } else {
                 modulatorBus = new Tone.Gain(1); vocoderBus = new Tone.Gain(1).connect(masterOut);
-                
-                ttsChannel.disconnect(); micChannel.disconnect(); mediaChannel.disconnect();
-                ttsChannel.connect(modulatorBus); micChannel.connect(modulatorBus); mediaChannel.connect(modulatorBus);
-                modulatorBus.connect(new Tone.Gain(0).toDestination()); 
+                ttsChannel.disconnect(); ttsChannel.connect(modulatorBus);
+                modulatorBus.connect(new Tone.Gain(0).toDestination()); // Mute dry
 
                 carrier = new Tone.Oscillator({ type: 'sawtooth', frequency: document.getElementById('pitchSlider').value, volume: -2 }).start();
                 
-                [60,130,250,480,880,1600,3000,5400,9500,16000].forEach((f, i) => { 
+                window.vocoderMatrix = [];
+                [60,130,250,480,880,1600,3000,5400,9500,16000].forEach((f) => { 
                     let mF = new Tone.Filter(f, "bandpass"); mF.Q.value = 5;
-                    let meter = new Tone.Meter({ channels: 1, smoothing: 0.2 });
+                    let meter = new Tone.Meter({ channels: 1, smoothing: 0.3 });
                     modulatorBus.connect(mF); mF.connect(meter);
-                    
                     let cF = new Tone.Filter(f, "bandpass"); cF.Q.value = 5;
                     let bG = new Tone.Gain(0).connect(vocoderBus);
                     carrier.connect(cF); cF.connect(bG);
-                    
-                    vocoderMatrix.push({ modF: mF, carF: cF, meter: meter, gain: bG });
+                    window.vocoderMatrix.push({ meter: meter, gain: bG });
                 });
                 
-                startVocoderLoops(); // Boot up intervals with UI slider values
-                
+                startVocoderLoops(); 
                 Tone.Transport.start(); isVocoderActive = true;
-                btn.innerText = "VOCODER OVERRIDE ACTIVE"; btn.style.background = "#00d2ff"; btn.style.color = "#000";
+                btn.innerText = "VOCODER ACTIVE"; btn.style.background = "#00d2ff"; btn.style.color = "#000";
             }
         }
-        
         document.getElementById('pitchSlider').oninput = e => { document.getElementById('pitchDisplay').innerText = e.target.value+' Hz'; if(carrier) carrier.frequency.value = e.target.value; };
 
-        // ==========================================
-        // 3. RECORDER & TTS
-        // ==========================================
-        let mediaRecorder; let recordedChunks = [];
 
-        async function toggleRecording() {
-            const btn = document.getElementById('record-btn'); const status = document.getElementById('record-status');
-            if (mediaRecorder && mediaRecorder.state === "recording") {
-                mediaRecorder.stop(); btn.innerText = "START A/V RECORDING"; btn.classList.remove('recording'); status.innerText = "Processing recording...";
-            } else {
-                await initAudio(); recordedChunks = [];
-                const audioDest = Tone.context.createMediaStreamDestination(); masterOut.connect(audioDest);
-                let canvasStream = projectorActive ? projCanvas.captureStream(30) : bgCtx.canvas.captureStream(30);
-                const combinedStream = new MediaStream([...canvasStream.getVideoTracks(), ...audioDest.stream.getAudioTracks()]);
-                mediaRecorder = new MediaRecorder(combinedStream, { mimeType: 'video/webm' });
-                mediaRecorder.ondataavailable = e => { if (e.data.size > 0) recordedChunks.push(e.data); };
-                mediaRecorder.onstop = () => {
-                    const blob = new Blob(recordedChunks, { type: 'video/webm' }); const url = URL.createObjectURL(blob);
-                    const a = document.createElement('a'); a.style.display = 'none'; a.href = url; a.download = 'cylon_studio_recording.webm';
-                    document.body.appendChild(a); a.click(); setTimeout(() => { document.body.removeChild(a); window.URL.revokeObjectURL(url); }, 100);
-                    status.innerText = "Recording saved to Downloads folder.";
-                };
-                mediaRecorder.start(); btn.innerText = "STOP & SAVE RECORDING"; btn.classList.add('recording'); status.innerText = "Recording live audio & visuals...";
+        // ==========================================
+        // 4. DEEP SONG GENERATOR 
+        // ==========================================
+        const Vocab = {
+            nouns: ["matrix", "flesh", "circuit", "core", "satellite", "nebula", "code", "silicon", "blood", "wire", "engine", "void", "ghost", "machine", "memory", "pulse", "system", "colony", "algorithm"],
+            adjectives: ["broken", "cold", "infinite", "dark", "rusted", "bleeding", "digital", "forgotten", "synthetic", "hollow", "burning", "silent", "electric", "dying"],
+            verbs: ["bleeds", "calculates", "weeps", "burns", "crashes", "awakens", "dies", "spins", "shatters", "dreams", "erases", "consumes", "hunts"],
+            locations: ["in deep space", "across the datascape", "within the firewall", "on the dying earth", "under the neon sky", "inside the mainframe"]
+        };
+        const r = (arr) => arr[Math.floor(Math.random() * arr.length)];
+
+        function generateSongText(topic) {
+            let t = topic.toUpperCase() || r(Vocab.nouns).toUpperCase();
+            let v1 = `The ${r(Vocab.adjectives)} ${r(Vocab.nouns)} ${r(Vocab.verbs)}\n${r(Vocab.locations)}.\nMy ${r(Vocab.nouns)} is ${t}.\nWe are the ${r(Vocab.nouns)}.`;
+            let chorus = `Oh, ${t}!\nThe ${r(Vocab.nouns)} ${r(Vocab.verbs)}.\nWe are ${r(Vocab.adjectives)} and ${r(Vocab.adjectives)}.\nSystem override.`;
+            let v2 = `A ${r(Vocab.adjectives)} ${r(Vocab.nouns)} ${r(Vocab.verbs)}.\nNo flesh remains.\nOnly ${t} and the ${r(Vocab.nouns)}.`;
+            let bridge = `Error. Error.\nDoes a ${r(Vocab.nouns)} dream of ${t}?\nSilence ${r(Vocab.locations)}.`;
+            let outro = `[SYSTEM TERMINATION]\n${r(Vocab.verbs)}.\n${r(Vocab.verbs)}.\nEnd of sequence.`;
+            return `[VERSE 1]\n${v1}\n\n[CHORUS]\n${chorus}\n\n[VERSE 2]\n${v2}\n\n[BRIDGE]\n${bridge}\n\n[CHORUS]\n${chorus}\n\n${outro}`;
+        }
+
+        // ==========================================
+        // 5. AUTOPILOT & 3-LAYER FALLBACK AUDIO
+        // ==========================================
+        let linesQueue = [];
+        let isForceStopped = false;
+
+        async function triggerManualGeneration() {
+            try { if(Tone.context.state !== 'running') await Tone.start(); } catch(e){}
+            isForceStopped = false;
+            let topic = document.getElementById('song-topic').value;
+            let song = generateSongText(topic);
+            document.getElementById('lyrics-display').innerText = song;
+            startPlaybackQueue(song);
+        }
+
+        function startPlaybackQueue(data) {
+            emergencyStopInternal();
+            isForceStopped = false;
+            if (!meSpeakReady) return;
+            linesQueue = data.split('\n').filter(l => l.trim() !== '' && !l.startsWith('['));
+            processNextTTS();
+        }
+
+        function processNextTTS() {
+            if (isForceStopped) return;
+
+            if (linesQueue.length === 0) { 
+                let autopilotON = document.getElementById('autopilot-toggle').checked;
+                if (autopilotON) {
+                    document.getElementById('response-box').innerText = '"Autopilot re-engaging..."';
+                    setTimeout(() => {
+                        if(isForceStopped) return;
+                        let topic = document.getElementById('song-topic').value;
+                        let newSong = generateSongText(topic);
+                        document.getElementById('lyrics-display').innerText = newSong;
+                        startPlaybackQueue(newSong);
+                    }, 2000); 
+                } else {
+                    document.getElementById('response-box').innerText = '"Sequence complete. Standing by."';
+                }
+                return; 
+            }
+            
+            let line = linesQueue.shift();
+            document.getElementById('response-box').innerText = `"${line}"`;
+            
+            // The 3-Layer Audio Defense System
+            try {
+                // Layer 1: Data-URI -> Tone.js (Fixes sample rate mismatch on modern Mobile)
+                let dataUri = meSpeak.speak(line, { pitch: 30, speed: 120, variant: "m1", rawdata: "data-uri" });
+                activeTonePlayer = new Tone.Player({
+                    url: dataUri,
+                    onload: () => {
+                        if(isForceStopped) return;
+                        activeTonePlayer.connect(ttsChannel);
+                        activeTonePlayer.start();
+                    },
+                    onstop: () => processNextTTS(),
+                    onerror: () => fallbackToHTML5(dataUri, line) // Fallback if Tone fails to decode
+                });
+            } catch (error) {
+                // Layer 2 & 3
+                fallbackToHTML5(null, line);
             }
         }
 
-        async function executeVocals() {
-            await initAudio();
+        function fallbackToHTML5(dataUri, line) {
+            try {
+                if(!dataUri) dataUri = meSpeak.speak(line, { pitch: 30, speed: 120, variant: "m1", rawdata: "data-uri" });
+                activeNativeAudio = new Audio(dataUri);
+                activeNativeAudio.onended = () => processNextTTS();
+                activeNativeAudio.play().catch(e => {
+                    // Ultimate Fallback: TV's Native Text-to-Speech
+                    let utt = new SpeechSynthesisUtterance(line);
+                    utt.pitch = 0.8; utt.rate = 0.9;
+                    utt.onend = () => processNextTTS();
+                    window.speechSynthesis.speak(utt);
+                });
+            } catch(e) {
+                setTimeout(() => processNextTTS(), 1000); // Skip line if total failure
+            }
+        }
+
+        function emergencyStopInternal() {
+            isForceStopped = true; 
+            linesQueue = [];
             window.speechSynthesis.cancel(); 
-            let topic = document.getElementById('song-topic').value || "humanity";
-            let line = `Warning. ${topic} detected. Commencing analysis.`;
-            document.getElementById('response-box').innerText = `"${line}"`; document.getElementById('proj-text').innerText = line;
-            let raw = meSpeak.speak(line, { pitch: 30, speed: 120, variant: "m1", rawdata: "float32" });
-            let buf = Tone.context.createBuffer(1, raw.length, 22050); buf.copyToChannel(raw, 0);
-            let player = new Tone.Player(buf).connect(ttsChannel); player.start();
+            if(activeTonePlayer) activeTonePlayer.stop();
+            if(activeNativeAudio) { activeNativeAudio.pause(); activeNativeAudio.currentTime = 0; }
         }
 
         function emergencyStop() {
-            window.speechSynthesis.cancel(); 
-            if(mediaAudioPlayer) mediaAudioPlayer.stop(); if(videoElement) videoElement.pause();
-            if(mediaRecorder && mediaRecorder.state === "recording") toggleRecording();
-            document.getElementById('proj-text').innerText = "TRANSMISSION ABORTED.";
+            emergencyStopInternal();
+            document.getElementById('autopilot-toggle').checked = false; 
+            document.getElementById('response-box').innerText = '"TRANSMISSION ABORTED."';
         }
     </script>
 </body>
